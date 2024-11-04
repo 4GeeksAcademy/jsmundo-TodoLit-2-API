@@ -10,3 +10,119 @@
     import 'relative/path/to/stylesheet.scss';
 
 */
+
+body{
+    background-color: #155724;
+
+}
+.todo-container {
+    width: 400px;
+    margin: auto;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+
+.add-button {
+    padding: 10px 20px; /* Espaciado interno */
+    background-color: #28a745; /* Color de fondo verde */
+    color: #fff; /* Color del texto blanco */
+    border: none; /* Sin bordes */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    font-size: 16px; /* Tamaño de fuente */
+    font-weight: bold; /* Texto en negrita */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
+    margin-top: 10px; /* Espaciado superior */
+    display: block; /* Asegura que el botón ocupe toda la línea disponible */
+    width: 100%; /* Ancho completo del contenedor */
+}
+
+
+
+.task-list {
+    list-style: none;
+    padding: 0;
+}
+
+.todo-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.todo-list-item.completed {
+    background-color: #d4edda;
+    color: #155724;
+    text-decoration: line-through;
+}
+
+.task-text {
+    cursor: pointer;
+    flex: 1;
+}
+
+.delete-button {
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.delete-button:hover {
+    background-color: #28a745;
+}
+
+small {
+    color: #888;
+    font-size: 12px;
+    margin-left: 10px;
+}
+.todo-list-item .delete-button{
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 03s ease;
+}
+.todo-list-item:hover .delete-button {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+
