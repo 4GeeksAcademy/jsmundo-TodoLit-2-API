@@ -27,6 +27,28 @@ const TodoLitApi = () => {
       });
   }, []);
 
+  // Función para crear usuario si no existe
+  const createUser = () => {
+    return fetch("https://playground.4geeks.com/todo/users/alex_31", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([]),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("No se pudo crear el usuario");
+        }
+        console.log("Usuario creado exitosamente");
+        alert("Usuario creado exitosamente.");
+      })
+      .catch((error) => {
+        console.error("Error al crear el usuario:", error);
+        alert(`No se pudo crear el usuario: ${error.message}`);
+      });
+  };
+
   // Función para agregar una nueva tarea
   const addTareas = () => {
     if (newTarea.trim() === "") {
@@ -45,15 +67,33 @@ const TodoLitApi = () => {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(err.message || "Error al agregar la tarea");
+          if (response.status === 404) {
+            // Usuario no existe, intentamos crearlo
+            console.log("Usuario no encontrado, intentando crear usuario...");
+            return createUser().then(() => {
+              // Reintentar agregar la tarea después de crear el usuario
+              return fetch("https://playground.4geeks.com/todo/todos/alex_31", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(nuevaTareaObj),
+              });
+            });
+          } else {
+            throw new Error("Error al agregar la tarea");
+          }
         }
         return response.json();
       })
       .then((data) => {
-        setTareas([...tareas, data]);
-        setNuevaTarea("");
-        console.log("Tarea agregada exitosamente:", data);
-        alert("Tarea agregada correctamente.");
+        if (data) {
+          // Si se recibió data significa que se agregó la tarea
+          setTareas([...tareas, data]);
+          setNuevaTarea("");
+          console.log("Tarea agregada exitosamente:", data);
+          alert("Tarea agregada correctamente.");
+        }
       })
       .catch((error) => {
         console.error("Error al agregar la tarea:", error);
@@ -88,6 +128,7 @@ const TodoLitApi = () => {
         alert(`No se pudo eliminar la tarea: ${error.message}`);
       });
   };
+
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       addTareas();
