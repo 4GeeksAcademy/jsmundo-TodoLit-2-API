@@ -3,18 +3,52 @@ import React, { useState, useEffect } from "react";
 const TodoLitApi = () => {
   const [tareas, setTareas] = useState([]);
   const [newTarea, setNuevaTarea] = useState("");
+  const [loading, setLoading] = useState(false); 
+  const username = "alexander60"; 
 
-  // Obtener las tareas al montar el componente
-  useEffect(() => {
-    fetch("https://playground.4geeks.com/todo/users/alex_31")
+  // Función para crear usuario si no existe
+  const createUser = () => {
+    console.log("Intentando crear usuario...");
+    return fetch(`https://playground.4geeks.com/todo/users/${username}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([]), 
+    })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Error al obtener las tareas");
+          throw new Error("No se pudo crear el usuario");
+        }
+        console.log("Usuario creado exitosamente");
+        alert("Usuario creado exitosamente.");
+        return response.json(); 
+      })
+      .catch((error) => {
+        console.error("Error al crear el usuario:", error);
+        alert(`No se pudo crear el usuario: ${error.message}`);
+        throw error; 
+      });
+  };
+
+  // Función para obtener las tareas del usuario
+  const obtenerTareas = () => {
+    return fetch(`https://playground.4geeks.com/todo/users/${username}`)
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            // Usuario no existe, intentar crearlo
+            console.log("Usuario no encontrado, intentando crear usuario...");
+            return createUser().then(() => {
+              return fetch(`https://playground.4geeks.com/todo/users/${username}`);
+            });
+          } else {
+            throw new Error("Error al obtener las tareas");
+          }
         }
         return response.json();
       })
       .then((data) => {
-        console.log("Tareas obtenidas:", data);
         if (Array.isArray(data)) {
           setTareas(data);
         } else {
@@ -25,29 +59,16 @@ const TodoLitApi = () => {
         console.error("Error al obtener las tareas:", error);
         alert(`No se pudo obtener las tareas: ${error.message}`);
       });
-  }, []);
-
-  // Función para crear usuario si no existe
-  const createUser = () => {
-    return fetch("https://playground.4geeks.com/todo/users/alex_31", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([]),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("No se pudo crear el usuario");
-        }
-        console.log("Usuario creado exitosamente");
-        alert("Usuario creado exitosamente.");
-      })
-      .catch((error) => {
-        console.error("Error al crear el usuario:", error);
-        alert(`No se pudo crear el usuario: ${error.message}`);
-      });
   };
+
+  // useEffect para crear el usuario y obtener las tareas al montar el componente
+  useEffect(() => {
+    setLoading(true); 
+    obtenerTareas()
+      .finally(() => {
+        setLoading(false); 
+      });
+  }, []);
 
   // Función para agregar una nueva tarea
   const addTareas = () => {
@@ -56,9 +77,11 @@ const TodoLitApi = () => {
       return;
     }
 
+    setLoading(true); 
     const nuevaTareaObj = { label: newTarea, is_done: false };
+    console.log("Agregando tarea:", nuevaTareaObj);
 
-    fetch("https://playground.4geeks.com/todo/todos/alex_31", {
+    fetch(`https://playground.4geeks.com/todo/todos/${username}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,11 +91,9 @@ const TodoLitApi = () => {
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
-            // Usuario no existe, intentamos crearlo
             console.log("Usuario no encontrado, intentando crear usuario...");
             return createUser().then(() => {
-              // Reintentar agregar la tarea después de crear el usuario
-              return fetch("https://playground.4geeks.com/todo/todos/alex_31", {
+              return fetch(`https://playground.4geeks.com/todo/todos/${username}`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -87,23 +108,35 @@ const TodoLitApi = () => {
         return response.json();
       })
       .then((data) => {
-        if (data) {
-          // Si se recibió data significa que se agregó la tarea
+        if (data && data.id) {
           setTareas([...tareas, data]);
           setNuevaTarea("");
           console.log("Tarea agregada exitosamente:", data);
           alert("Tarea agregada correctamente.");
+        } else if (data instanceof Response) {
+          return data.json().then((data2) => {
+            if (data2 && data2.id) {
+              setTareas([...tareas, data2]);
+              setNuevaTarea("");
+              console.log("Tarea agregada exitosamente después de crear el usuario:", data2);
+              alert("Tarea agregada correctamente.");
+            }
+          });
         }
       })
       .catch((error) => {
         console.error("Error al agregar la tarea:", error);
         alert(`No se pudo agregar la tarea: ${error.message}`);
+      })
+      .finally(() => {
+        setLoading(false); 
       });
   };
 
-  // Función optimizada para eliminar una tarea
+  // Función para eliminar una tarea
   const deleteTarea = (id) => {
     console.log(`Intentando eliminar tarea con ID: ${id}`);
+    setLoading(true); 
 
     fetch(`https://playground.4geeks.com/todo/todos/${id}`, {
       method: "DELETE",
@@ -126,9 +159,13 @@ const TodoLitApi = () => {
       .catch((error) => {
         console.error("Error al eliminar la tarea:", error);
         alert(`No se pudo eliminar la tarea: ${error.message}`);
+      })
+      .finally(() => {
+        setLoading(false); 
       });
   };
 
+  // Manejo del evento de tecla para agregar tarea con "Enter"
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       addTareas();
@@ -146,9 +183,10 @@ const TodoLitApi = () => {
           onKeyDown={handleKeyDown}
           placeholder="Nueva tarea"
           className="todo-input"
+          disabled={loading}
         />
-        <button onClick={addTareas} className="add-button">
-          Agregar Tarea
+        <button onClick={addTareas} className="add-button" disabled={loading}>
+          {loading ? "Procesando..." : "Agregar Tarea"}
         </button>
       </div>
       <ul className="todo-list">
@@ -158,6 +196,7 @@ const TodoLitApi = () => {
             <button
               onClick={() => deleteTarea(tarea.id)}
               className="delete-button"
+              disabled={loading}
             >
               Eliminar
             </button>
@@ -169,3 +208,4 @@ const TodoLitApi = () => {
 };
 
 export default TodoLitApi;
+
